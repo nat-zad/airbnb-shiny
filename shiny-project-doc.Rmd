@@ -1,0 +1,322 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(base)
+
+manh = read.csv("manhattan.txt")
+```
+
+
+
+```{r}
+manh = read.csv("manhattan.txt")
+```
+
+```{r}
+manhat = read.csv("full_manh.txt")
+```
+
+manhat = manhat[c("id","name","host_id","boro","neighbourhood","latitude", "longitude","zipcode","room_type","price", "number_of_reviews")]
+```{r}
+manhat = manhat[c("id","name","host_id","boro","neighbourhood","latitude", "longitude","zipcode","room_type","price", "number_of_reviews")]
+```
+
+```{r}
+manh = manh[c("id","name","host_id","boro","neighbourhood","latitude", "longitude","zipcode","room_type","price", "number_of_reviews")]
+```
+
+```{r}
+nypd = read.csv("nypd_manh.txt")
+```
+
+
+```{r}
+nypd = na.omit(nypd)
+```
+
+```{r}
+library(lubridate)
+library(dplyr)
+nypd = nypd%>%
+  mutate(date = mdy(date))
+```
+
+```{r}
+nypd = nypd%>%
+  filter(date >= "2022-01-01")
+```
+
+```{r}
+rm("shootings_2")
+```
+
+```{r}
+
+data1<-manhat %>% 
+  group_by(neighbourhood)%>%
+  summarise(AvgPrice=mean(price))
+ 
+
+```
+```{r}
+nypd = nypd[nypd$zipcode != '83',]
+```
+
+```{r}
+data3 =
+  aggregate(x = nypd$zipcode,
+            by = list(nypd$offense),
+            FUN = function(x) length(unique(x)))
+```
+
+
+```{r}
+data2 <- nypd%>%
+  group_by()%>%
+  count(offense, sort=TRUE)
+```
+
+```{r}
+
+cat = nypd %>% 
+  group_by(category) %>% 
+  count(category) 
+
+ggplot(cat, aes(x ="", y = n, fill=category))+
+  geom_bar(width = 1, stat = "identity")+
+  theme_minimal() +
+ labs(x = "",y = "Total Reported Incidents")+
+  ggtitle("Category Breakdown by Count")+
+  theme(panel.border = element_rect(color = "black",
+                                        fill = NA,
+                                        size = 1)) +
+      theme(plot.title = element_text(hjust = 0.5))
+  
+  
+```
+
+
+```{r}
+tally = nypd%>%group_by(date, zipcode)%>% tally()
+
+tally
+```
+
+```{r}
+date_tally =nypd%>%
+  group_by(date)%>% 
+  tally()
+
+date_tally
+```
+```{r}
+ggplot(date_tally)+
+  geom_point(aes(x = date, y = n))+
+  theme_classic()+
+  ggtitle("Number of reports, by Date")+
+  labs(x = "",y = "Number of Reports")+
+  theme(panel.border = element_rect(color = "black",
+                                        fill = NA,
+                                        size = 1)) +
+      theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+
+```{r}
+worst_zip<-nypd%>%group_by(zipcode)%>% tally()
+worst_zip<-worst_zip%>%arrange(desc(n))%>%head(n=10)
+worst_zip
+```
+```{r}
+best_zip<-nypd%>%group_by(zipcode)%>% tally()
+best_zip<-best_zip%>%arrange((n))%>%head(n=15)
+```
+
+```{r}
+ ggplot(date_tally, aes(x=date, y = ..count.., col=n))+
+geom_density() + 
+  theme_classic()+
+  labs(x = "",y = "Count")+
+  theme(panel.border = element_rect(color = "black",
+                                        fill = NA,
+                                        size = 1)) +
+      theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+```{r}
+nypd%>%filter(zipcode %in% nypd$zipcode)
+
+  
+```
+
+```{r}
+worst_zip$zipcode = as.character(worst_zip$zipcode)
+```
+
+
+
+```{r}
+ggplot(data = worst_zip, aes(x = reorder(zipcode, -n) , y = n))+
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(x = "Zipcodes",y = "Total Incidents (2021 - Present)")+
+  ggtitle("Zipcodes with Highest Amount of Reported Criminal Activity")+
+  theme(panel.border = element_rect(color = "black",
+                                        fill = NA,
+                                        size = 1)) +
+      theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r}
+nypd %>%
+  group_by(date)%>%
+  summarise(n=n())
+
+```
+
+```{r}
+nypd %>% mutate(Date2 = mdy_hms(date,tz=Sys.timezone())) %>%
+  mutate(day = date(Date2)) %>%
+  group_by(day) %>%
+  summarize(n=n()) 
+```
+
+```{r}
+top_crime = nypd %>%
+  group_by(.,offense)%>%
+  summarise(.,freq = n())
+
+new = top_crime[order(top_crime$freq, decreasing = TRUE),]
+new = head(new)
+
+```
+
+```{r}
+ggplot(new)+
+  geom_bar(aes(x = reorder(offense,-freq), y = freq), stat = "identity")+
+  ggtitle("Most Frequently Reported Offenses")+
+  theme_minimal() +
+ labs(x = "", y = "Number of Reports") +
+  theme(axis.text.x = element_text(angle =50,size=7,vjust=0.4))+
+  theme(panel.border = element_rect(color = "black",
+                                        fill = NA,
+                                        size = 1)) +
+      theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+x = manhat[, c('price', 'zipcode')]
+y = tally[, c('n','zipcode')]
+cor_mat = cor(x, y)
+corrplot::corrplot(cor_mat)
+```
+
+
+```{r}
+neighbourhood<-manhat%>%
+  select(boro,neighbourhood,price,
+         number_of_reviews)%>%
+  group_by(neighbourhood, boro)%>%
+  summarise(mean_price=mean(price),
+            mean_popularity=mean(number_of_reviews))
+  
+
+neighbourhood%>%
+  arrange(desc(mean_price))%>%
+  head(40)%>%
+ggplot(aes(x=mean_price,y=reorder(neighbourhood,mean_price))) +
+  geom_col()+
+  labs(
+       x="Average Prices",
+       y="Neighborhood Name",
+       title="The Most Expensive Neighborhood with their Group")+
+  theme_minimal()+
+  theme(panel.border = element_rect(color = "black",
+                                        fill = NA,
+                                        size = 1)) +
+      theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+neighbourhood%>%
+  arrange(desc(mean_popularity))%>%
+  head(40)%>%
+ggplot(.,aes(x=mean_popularity,y=reorder(neighbourhood,mean_popularity))) +
+  geom_col()+
+  labs(
+       x="Average Number of Reviews",
+       y="Neighborhood Name",
+       title="The Most Popular Neighborhood based on Reviews")+
+  theme_minimal()+
+  theme(panel.border = element_rect(color = "black",
+                                        fill = NA,
+                                        size = 1)) +
+      theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+```{r}
+avg_room <-manhat %>% group_by(room_type)%>%summarise(AvgPrice=mean(price))
+
+ggplot(avg_room,aes(x=room_type,y=AvgPrice,fill=(room_type))) +
+  geom_bar(stat="identity",position="dodge") + 
+  theme_minimal() + 
+  labs(x="",y="Average Price in Dollars",title="Average Price by Room Type",
+       fill="Room Type") + 
+  theme(axis.text.x = element_text(size=10,vjust=0.4))+
+  theme(panel.border = element_rect(color = "black",
+                                        fill = NA,
+                                        size = 1)) +
+      theme(plot.title = element_text(hjust = 0.5))
+  
+
+```
+```{r}
+ggplot(manhat, aes(x = neighbourhood, y = room_type))+
+  geom_count()+
+  ggtitle("Room Types in Listings, by Neighborhood")+
+  theme_minimal() +
+ labs(x = "", y = "Room Type") +
+  theme(axis.text.x = element_text(angle =90,size=10,vjust=0.4))+
+  theme(panel.border = element_rect(color = "black",
+                                        fill = NA,
+                                        size = 1)) +
+      theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+ggplot(manhat, aes(x = neighbourhood, y = price))+
+  geom_boxplot()+
+  ggtitle("Median Price, by Neighborhood")+
+  theme_minimal() +
+ labs(x = "", y = "Price in Dollars") +
+  theme(axis.text.x = element_text(angle =90,size=10,vjust=0.4))+
+  theme(panel.border = element_rect(color = "black",
+                                        fill = NA,
+                                        size = 1)) +
+      theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r}
+ggplot(data=best_zip[best_zip$zipcode %in% c(10044,10282, 10069, 10280, 10281, 74),], 
+           aes(x=factor(zipcode), y=n))+
+           geom_bar(stat="identity", width = 0.5, group=1)+
+           theme_minimal()+
+  ggtitle("Zipcodes with Highest Amount of Reported Criminal Activity")+
+  labs(x = "", y = "Number of Reports") +
+  theme(axis.text.x = element_text(size=10,vjust=0.4))+
+  theme(panel.border = element_rect(color = "black",
+                                        fill = NA,
+                                        size = 1)) +
+      theme(plot.title = element_text(hjust = 0.5))
+
+```
+
