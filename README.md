@@ -1,1 +1,1 @@
-# airbnb-shiny
+# This shiny app allows a user to explore Airbnb listings on a map and the local crime data connected to that specific area. This app will help a prospective Airbnb booker to make safer decisions regarding their NYC stay.
